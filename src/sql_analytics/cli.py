@@ -110,6 +110,39 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"\n[-] Error running query: {e}", file=sys.stderr)
         return 1
 
+def cmd_benchmark(args: argparse.Namespace) -> int:
+    """Handle the benchmark CLI command."""
+    db_mgr = DBManager()
+    if not db_mgr.db_path.exists():
+        print(f"\n[-] Database file does not exist at: {db_mgr.db_path}")
+        print("Run 'sql-analytics db-init' to create it.")
+        return 1
+        
+    try:
+        print(f"\nRunning performance benchmark across all registered queries...")
+        print(f"Iterations per query: {args.iterations}\n")
+        
+        # Run benchmark
+        stats = db_mgr.benchmark_queries(iterations=args.iterations)
+        
+        # Format output using our shared formatter
+        from sql_analytics.services.db_manager import format_results_list
+        formatted_result = format_results_list(stats, fmt=args.format)
+        
+        if args.output:
+            from pathlib import Path
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(formatted_result, encoding="utf-8")
+            print(f"[+] Benchmark results successfully exported to: {out_path.resolve()}")
+        else:
+            print(formatted_result)
+            
+        return 0
+    except Exception as e:
+        print(f"\n[-] Error running performance benchmark: {e}", file=sys.stderr)
+        return 1
+
 def main() -> None:
     """CLI Main Entry Point."""
     parser = argparse.ArgumentParser(
@@ -158,6 +191,27 @@ def main() -> None:
         help="Write query output directly to a file path."
     )
     parser_run.set_defaults(func=cmd_run)
+    
+    # benchmark command
+    parser_bench = subparsers.add_parser("benchmark", help="Benchmark latency of all registered queries")
+    parser_bench.add_argument(
+        "--iterations", "-i",
+        type=int,
+        default=5,
+        help="Number of iterations to run each query (default: 5)"
+    )
+    parser_bench.add_argument(
+        "--format", "-f",
+        choices=["table", "csv", "json", "markdown"],
+        default="table",
+        help="Specify the output format (default: table)."
+    )
+    parser_bench.add_argument(
+        "--output", "-o",
+        type=str,
+        help="Write benchmark metrics directly to a file path."
+    )
+    parser_bench.set_defaults(func=cmd_benchmark)
     
     args = parser.parse_args()
     

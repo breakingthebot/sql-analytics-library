@@ -71,7 +71,18 @@ Here are the exact CLI commands to run the application:
    - `--output` or `-o`: Export results directly to a local file.
      - E.g., `sql-analytics run 1 -f csv -o reports/ltv_report.csv`
 
-5. **Run Automated Tests**:
+5. **Benchmark Query Performance**:
+   Measure latency and generate run-time statistics for all 20 queries.
+   ```bash
+   sql-analytics benchmark --iterations 5
+   ```
+   *Options*:
+   - `--iterations` or `-i`: The number of benchmark runs per query (default: 5).
+   - `--format` or `-f`: Specify stats table format (`table` [default], `csv`, `json`, `markdown`).
+   - `--output` or `-o`: Export benchmark metrics to a local file path.
+     - E.g., `sql-analytics benchmark -f json -o benchmark_report.json`
+
+6. **Run Automated Tests**:
    ```bash
    pytest --basetemp=tests/tmp
    ```

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-07-06
+### Added
+- `benchmark` CLI subcommand enabling query performance benchmarking.
+- DBManager `benchmark_queries` logic tracking min, max, and average execution latencies in milliseconds.
+- Automated tests covering the benchmark execution and formatting.
+
 ## [0.5.0] - 2026-07-06
 ### Added
 - Queries 16 through 20 in the query registry, resolving review response durations, shelf-life velocity, category cumulative month-over-month window sums, repeat purchase sequence intervals, and category penetration coverage ratios.

@@ -85,3 +85,23 @@ def test_db_manager_all_registered_queries(temp_db_mgr):
                 assert isinstance(res[0], dict)
         except Exception as e:
             pytest.fail(f"Query {query_def['id']} failed to execute: {e}\nSQL:\n{query_def['sql']}")
+
+def test_db_manager_benchmark(temp_db_mgr):
+    """Test that query benchmarking runs successfully and computes expected latency metrics."""
+    temp_db_mgr.initialize_database()
+    temp_db_mgr.populate_mock_data(num_customers=5, num_products=3, num_orders=5, seed=42)
+    
+    stats = temp_db_mgr.benchmark_queries(iterations=2)
+    
+    assert isinstance(stats, list)
+    assert len(stats) == 20
+    
+    # Assert fields in first query stats
+    first_query_stats = stats[0]
+    assert "query_id" in first_query_stats
+    assert "title" in first_query_stats
+    assert "runs" in first_query_stats
+    assert first_query_stats["runs"] == 2
+    assert "min_ms" in first_query_stats
+    assert "max_ms" in first_query_stats
+    assert "avg_ms" in first_query_stats

@@ -142,3 +142,38 @@ def test_cli_output_file(capsys, tmp_path):
         
     finally:
         del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_benchmark(capsys, tmp_path):
+    """Verify that calling the CLI 'benchmark' subcommand runs the profiler and prints tables."""
+    temp_db = tmp_path / "cli_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        # Initialize
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "5", "--products", "3", "--orders", "5"]):
+            with pytest.raises(SystemExit):
+                main()
+        
+        # Test default benchmark run
+        with patch.object(sys, "argv", ["sql-analytics", "benchmark", "--iterations", "1"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert "Running performance benchmark across all registered queries..." in captured.out
+            assert "query_id" in captured.out
+            assert "avg_ms" in captured.out
+
+        # Test CSV benchmark output to file
+        out_csv = tmp_path / "benchmark_report.csv"
+        with patch.object(sys, "argv", ["sql-analytics", "benchmark", "--iterations", "1", "--format", "csv", "--output", str(out_csv)]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            
+        assert out_csv.exists()
+        content = out_csv.read_text(encoding="utf-8")
+        assert "query_id,title,runs,min_ms,max_ms,avg_ms" in content or "query_id,title,runs,min_ms,max_ms,avg_ms" in content.replace('"', '')
+
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]
