@@ -481,6 +481,145 @@ QUERIES: List[Dict[str, Any]] = [
             FROM monthly_splits
             ORDER BY order_month ASC;
         """
+    },
+    {
+        "id": 16,
+        "title": "Customer Review Response Speed and Rating Trend",
+        "description": "Calculates the average days elapsed between customer order and review creation, grouped by segment and rating.",
+        "sql": """
+            SELECT 
+                c.segment,
+                r.rating,
+                COUNT(r.review_id) AS review_count,
+                ROUND(AVG(julianday(r.created_at) - julianday(o.order_date)), 1) AS avg_days_to_review
+            FROM reviews r
+            JOIN orders o ON r.customer_id = o.customer_id
+            JOIN customers c ON r.customer_id = c.customer_id
+            JOIN order_items oi ON o.order_id = oi.order_id AND r.product_id = oi.product_id
+            WHERE o.status = 'Completed'
+            GROUP BY c.segment, r.rating
+            ORDER BY c.segment ASC, r.rating DESC;
+        """
+    },
+    {
+        "id": 17,
+        "title": "Product Lifecycle Sales Duration and Shelf-Life Velocity",
+        "description": "Measures the lifespan in days between when a product was added to the catalog and its last sale date, along with daily sales velocity.",
+        "sql": """
+            WITH product_sales_lifecycle AS (
+                SELECT 
+                    oi.product_id,
+                    MIN(o.order_date) AS first_sale,
+                    MAX(o.order_date) AS last_sale,
+                    SUM(oi.quantity) AS total_units_sold
+                FROM order_items oi
+                JOIN orders o ON oi.order_id = o.order_id
+                WHERE o.status = 'Completed'
+                GROUP BY oi.product_id
+            )
+            SELECT 
+                p.product_id,
+                p.name AS product_name,
+                p.category,
+                strftime('%Y-%m-%d', p.created_at) AS date_added,
+                ROUND(julianday(psl.last_sale) - julianday(p.created_at), 1) AS shelf_life_days,
+                psl.total_units_sold,
+                ROUND(psl.total_units_sold / (julianday(psl.last_sale) - julianday(p.created_at) + 1.0), 2) AS units_sold_per_day
+            FROM products p
+            JOIN product_sales_lifecycle psl ON p.product_id = psl.product_id
+            ORDER BY units_sold_per_day DESC;
+        """
+    },
+    {
+        "id": 18,
+        "title": "Category Monthly Cumulative Sales Progression",
+        "description": "Calculates monthly revenue per category and calculates a running cumulative revenue progression using window functions.",
+        "sql": """
+            WITH category_monthly_sales AS (
+                SELECT 
+                    p.category,
+                    strftime('%Y-%m', o.order_date) AS sales_month,
+                    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS monthly_revenue
+                FROM order_items oi
+                JOIN products p ON oi.product_id = p.product_id
+                JOIN orders o ON oi.order_id = o.order_id
+                WHERE o.status = 'Completed'
+                GROUP BY p.category, sales_month
+            )
+            SELECT 
+                category,
+                sales_month,
+                ROUND(monthly_revenue, 2) AS monthly_revenue,
+                ROUND(SUM(monthly_revenue) OVER (
+                    PARTITION BY category 
+                    ORDER BY sales_month 
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ), 2) AS cumulative_category_revenue
+            FROM category_monthly_sales
+            ORDER BY category ASC, sales_month ASC;
+        """
+    },
+    {
+        "id": 19,
+        "title": "Customer Repeat Purchase Intervals and Loyalty Velocity",
+        "description": "Calculates the average interval in days elapsed between orders 1-to-2 and 2-to-3 per customer, grouped by segment.",
+        "sql": """
+            WITH sequenced_orders AS (
+                SELECT 
+                    customer_id,
+                    order_date,
+                    ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date) AS seq
+                FROM orders
+                WHERE status = 'Completed'
+            ),
+            order_gaps AS (
+                SELECT 
+                    so1.customer_id,
+                    julianday(so2.order_date) - julianday(so1.order_date) AS days_to_next_order,
+                    so1.seq AS start_sequence
+                FROM sequenced_orders so1
+                JOIN sequenced_orders so2 ON so1.customer_id = so2.customer_id AND so2.seq = so1.seq + 1
+            )
+            SELECT 
+                c.segment,
+                COUNT(DISTINCT og.customer_id) AS customers_analyzed,
+                ROUND(AVG(CASE WHEN og.start_sequence = 1 THEN og.days_to_next_order ELSE NULL END), 1) AS avg_days_order_1_to_2,
+                ROUND(AVG(CASE WHEN og.start_sequence = 2 THEN og.days_to_next_order ELSE NULL END), 1) AS avg_days_order_2_to_3
+            FROM order_gaps og
+            JOIN customers c ON og.customer_id = c.customer_id
+            GROUP BY c.segment
+            ORDER BY c.segment ASC;
+        """
+    },
+    {
+        "id": 20,
+        "title": "Product Category Penetration and Customer Cross-Shopping Ratio",
+        "description": "Computes how many distinct categories each customer has bought from to calculate the category penetration ratio per segment.",
+        "sql": """
+            WITH customer_category_purchases AS (
+                SELECT 
+                    c.customer_id,
+                    c.segment,
+                    COUNT(DISTINCT p.category) AS distinct_categories_bought
+                FROM customers c
+                LEFT JOIN orders o ON c.customer_id = o.customer_id AND o.status = 'Completed'
+                LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                LEFT JOIN products p ON oi.product_id = p.product_id
+                GROUP BY c.customer_id, c.segment
+            ),
+            total_categories_count AS (
+                SELECT COUNT(DISTINCT category) AS total_categories FROM products
+            )
+            SELECT 
+                ccp.segment,
+                COUNT(ccp.customer_id) AS customer_count,
+                ROUND(AVG(ccp.distinct_categories_bought), 2) AS avg_distinct_categories_bought,
+                (SELECT total_categories FROM total_categories_count) AS total_system_categories,
+                ROUND(AVG(ccp.distinct_categories_bought) * 100.0 / (SELECT total_categories FROM total_categories_count), 1) AS category_penetration_ratio_pct
+            FROM customer_category_purchases ccp
+            GROUP BY ccp.segment
+            ORDER BY category_penetration_ratio_pct DESC;
+        """
     }
 ]
 

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-07-06
+### Added
+- Queries 16 through 20 in the query registry, resolving review response durations, shelf-life velocity, category cumulative month-over-month window sums, repeat purchase sequence intervals, and category penetration coverage ratios.
+- Completed the portfolio goal of 20 complex analytical SQL queries.
+- Extended automated tests to run and validate all 20 queries successfully.
+
 ## [0.4.0] - 2026-07-06
 ### Added
 - `--format` (or `-f`) CLI parameter supporting CSV, JSON, Markdown, and text table formatting outputs.

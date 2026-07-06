@@ -77,7 +77,7 @@ Here are the exact CLI commands to run the application:
    ```
 
 ## Analytical Queries
-The library currently includes the following 15 complex analytical queries:
+The library currently includes the following 20 complex analytical queries:
 1. **Top Customers by Lifetime Value (LTV)**: Ranks customers by their lifetime spending on completed orders.
 2. **Product Category Profit Margins**: Analyzes margins, cost, revenue, and units sold by category.
 3. **Monthly Sales and Order Trends**: Tracks month-over-month revenue growth and Average Order Value (AOV).
@@ -93,6 +93,11 @@ The library currently includes the following 15 complex analytical queries:
 13. **Product Review Ratings and Sales Volume Correlation**: Evaluates average review ratings against purchase counts and revenue totals.
 14. **Stock Adjustment Log Auditing and Reorder Alerts**: Audits 90-day restocks, sales, and returns to trigger low stock alerts.
 15. **First-Time vs Repeat Customer Monthly Revenue Split**: Compares monthly revenue and percentages from new vs. repeat buyers.
+16. **Customer Review Response Speed and Rating Trend**: Finds the average elapsed time between purchases and reviews.
+17. **Product Lifecycle Sales Duration and Shelf-Life Velocity**: Measures duration from catalog addition to last sale and daily sales velocity.
+18. **Category Monthly Cumulative Sales Progression**: Calculates running revenue aggregates partitioned by product category.
+19. **Customer Repeat Purchase Intervals and Loyalty Velocity**: Evaluates order intervals for orders 1-to-2 and 2-to-3.
+20. **Product Category Penetration and Customer Cross-Shopping Ratio**: Computes unique category coverage metrics per segment.
 
 ## Deployed
 Not applicable (Local portfolio development package).
