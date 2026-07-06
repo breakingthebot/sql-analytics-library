@@ -324,7 +324,162 @@ QUERIES: List[Dict[str, Any]] = [
                     ELSE 'Long-tail 20% Contributor'
                 END AS pareto_classification
             FROM revenue_ranks
-            ORDER BY customer_revenue DESC;
+        """
+    },
+    {
+        "id": 11,
+        "title": "Category Cross-Selling Patterns (Market Basket Analysis)",
+        "description": "Identifies product categories frequently purchased together in the same order, ranking category pairs descending by purchase frequency.",
+        "sql": """
+            SELECT 
+                p1.category AS category_a,
+                p2.category AS category_b,
+                COUNT(DISTINCT oi1.order_id) AS co_purchase_count
+            FROM order_items oi1
+            JOIN order_items oi2 ON oi1.order_id = oi2.order_id AND oi1.product_id != oi2.product_id
+            JOIN products p1 ON oi1.product_id = p1.product_id
+            JOIN products p2 ON oi2.product_id = p2.product_id
+            WHERE p1.category < p2.category
+            GROUP BY category_a, category_b
+            ORDER BY co_purchase_count DESC;
+        """
+    },
+    {
+        "id": 12,
+        "title": "Customer Value Tiering and Spend Percentile Ranking",
+        "description": "Calculates customer lifetime spend, AOV, value tiers, and relative spending percentile ranks using PERCENT_RANK.",
+        "sql": """
+            WITH customer_stats AS (
+                SELECT 
+                    c.customer_id,
+                    c.first_name || ' ' || c.last_name AS customer_name,
+                    c.segment,
+                    COUNT(DISTINCT o.order_id) AS order_count,
+                    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS total_spend
+                FROM customers c
+                JOIN orders o ON c.customer_id = o.customer_id
+                JOIN order_items oi ON o.order_id = oi.order_id
+                WHERE o.status = 'Completed'
+                GROUP BY c.customer_id, c.segment
+            )
+            SELECT 
+                customer_id,
+                customer_name,
+                segment,
+                order_count,
+                ROUND(total_spend, 2) AS total_spend,
+                ROUND(total_spend / order_count, 2) AS aov,
+                CASE 
+                    WHEN total_spend >= 1500 THEN 'Platinum Tier'
+                    WHEN total_spend >= 500 THEN 'Gold Tier'
+                    WHEN total_spend >= 100 THEN 'Silver Tier'
+                    ELSE 'Bronze Tier'
+                END AS customer_value_tier,
+                ROUND(PERCENT_RANK() OVER (ORDER BY total_spend) * 100, 1) AS spend_percentile
+            FROM customer_stats
+            ORDER BY total_spend DESC;
+        """
+    },
+    {
+        "id": 13,
+        "title": "Product Review Ratings and Sales Volume Correlation",
+        "description": "Combines product reviews with sales volumes to verify if higher-rated products drive higher unit volumes and revenues.",
+        "sql": """
+            SELECT 
+                p.product_id,
+                p.name AS product_name,
+                p.category,
+                p.price AS current_price,
+                ROUND(AVG(r.rating), 2) AS avg_rating,
+                COUNT(DISTINCT r.review_id) AS total_reviews,
+                SUM(oi.quantity) AS total_units_sold,
+                ROUND(SUM(oi.quantity * oi.unit_price * (1 - oi.discount)), 2) AS total_sales
+            FROM products p
+            LEFT JOIN reviews r ON p.product_id = r.product_id
+            LEFT JOIN order_items oi ON p.product_id = oi.product_id
+            LEFT JOIN orders o ON oi.order_id = o.order_id AND o.status = 'Completed'
+            GROUP BY p.product_id, p.name, p.category, p.price
+            ORDER BY avg_rating DESC, total_sales DESC;
+        """
+    },
+    {
+        "id": 14,
+        "title": "Stock Adjustment Log Auditing and Reorder Alerts",
+        "description": "Audits the net inventory adjustments (sales vs restocks vs returns) over the last 90 days, flagging low stock.",
+        "sql": """
+            WITH product_stock_adjustments AS (
+                SELECT 
+                    product_id,
+                    SUM(CASE WHEN reason = 'Restock' THEN change_quantity ELSE 0 END) AS total_restocked,
+                    SUM(CASE WHEN reason = 'Sale' THEN change_quantity ELSE 0 END) AS total_sold,
+                    SUM(CASE WHEN reason = 'Return' THEN change_quantity ELSE 0 END) AS total_returned,
+                    SUM(change_quantity) AS net_90_day_change
+                FROM inventory_logs
+                WHERE logged_at >= datetime((SELECT MAX(logged_at) FROM inventory_logs), '-90 days')
+                GROUP BY product_id
+            )
+            SELECT 
+                p.product_id,
+                p.name AS product_name,
+                p.category,
+                p.stock_quantity AS current_stock,
+                COALESCE(psa.total_restocked, 0) AS units_restocked_90d,
+                COALESCE(psa.total_sold, 0) AS units_sold_90d,
+                COALESCE(psa.total_returned, 0) AS units_returned_90d,
+                COALESCE(psa.net_90_day_change, 0) AS net_change_90d,
+                CASE 
+                    WHEN p.stock_quantity <= 15 THEN 'CRITICAL REORDER'
+                    WHEN p.stock_quantity <= 35 THEN 'WARN: LOW STOCK'
+                    ELSE 'Stock Level Healthy'
+                END AS inventory_health_status
+            FROM products p
+            LEFT JOIN product_stock_adjustments psa ON p.product_id = psa.product_id
+            ORDER BY p.stock_quantity ASC;
+        """
+    },
+    {
+        "id": 15,
+        "title": "First-Time vs Repeat Customer Monthly Revenue Split",
+        "description": "Tracks monthly revenue split and percentage contribution from new (first purchase) vs repeat buyers.",
+        "sql": """
+            WITH customer_orders_sequenced AS (
+                SELECT 
+                    customer_id,
+                    order_id,
+                    order_date,
+                    strftime('%Y-%m', order_date) AS order_month,
+                    ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date) AS order_sequence
+                FROM orders
+                WHERE status = 'Completed'
+            ),
+            order_revenues AS (
+                SELECT 
+                    cos.order_month,
+                    cos.order_id,
+                    cos.order_sequence,
+                    SUM(oi.quantity * oi.unit_price * (1 - oi.discount)) AS order_value
+                FROM customer_orders_sequenced cos
+                JOIN order_items oi ON cos.order_id = oi.order_id
+                GROUP BY cos.order_month, cos.order_id, cos.order_sequence
+            ),
+            monthly_splits AS (
+                SELECT 
+                    order_month,
+                    ROUND(SUM(CASE WHEN order_sequence = 1 THEN order_value ELSE 0.0 END), 2) AS new_customer_revenue,
+                    ROUND(SUM(CASE WHEN order_sequence > 1 THEN order_value ELSE 0.0 END), 2) AS repeat_customer_revenue,
+                    ROUND(SUM(order_value), 2) AS total_revenue
+                FROM order_revenues
+                GROUP BY order_month
+            )
+            SELECT 
+                order_month,
+                new_customer_revenue,
+                repeat_customer_revenue,
+                total_revenue,
+                ROUND((new_customer_revenue * 100.0) / total_revenue, 2) AS new_revenue_pct,
+                ROUND((repeat_customer_revenue * 100.0) / total_revenue, 2) AS repeat_revenue_pct
+            FROM monthly_splits
+            ORDER BY order_month ASC;
         """
     }
 ]
