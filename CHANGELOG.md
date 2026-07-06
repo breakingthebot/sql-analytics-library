@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-07-06
+### Added
+- `shell` CLI subcommand opening an interactive query prompt shell (REPL).
+- REPLShell service supporting multi-line SQL input with semicolon termination, table listing, table schema creation auditing, pre-registered analytical library execution, format toggling, and keyboard interrupts.
+- Extended automated test suite covering interactive commands, custom SQL executes, format toggling, and query runs.
+
 ## [0.8.0] - 2026-07-06
 ### Added
 - `--seasonal` CLI option on the `db-init` command to simulate seasonal retail shopping trends (Nov/Dec holiday spikes, July summer campaigns, post-holiday slumps).

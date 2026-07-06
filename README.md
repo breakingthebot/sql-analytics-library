@@ -94,7 +94,21 @@ Here are the exact CLI commands to run the application:
    *Options*:
    - `--output` or `-o`: Configure the target HTML file path (default: `reports/dashboard.html`).
 
-7. **Run Automated Tests**:
+7. **Interactive Query Shell (REPL)**:
+   Launch a custom interactive terminal shell to run ad-hoc SQL queries and utility dot commands directly on the SQLite dataset.
+   ```bash
+   sql-analytics shell
+   ```
+   *Interactive Commands*:
+   - `.help`: Display shell instructions.
+   - `.list`: Show all table names.
+   - `.schema <table>`: Output CREATE TABLE DDL.
+   - `.queries`: List all 20 pre-registered analytical library queries.
+   - `.run <id>`: Run a pre-registered query by its ID (1-20).
+   - `.format <table|csv|json|markdown>`: Change output format on the fly.
+   - `.exit` / `.quit`: Close shell.
+
+8. **Run Automated Tests**:
    ```bash
    pytest --basetemp=tests/tmp
    ```

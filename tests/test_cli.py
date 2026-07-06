@@ -222,3 +222,27 @@ def test_cli_db_init_seasonal(capsys, tmp_path):
             
     finally:
         del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_shell(capsys, tmp_path):
+    """Verify that calling the CLI 'shell' subcommand launches the interactive REPL."""
+    temp_db = tmp_path / "cli_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        # Initialize
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "5", "--products", "3", "--orders", "5"]):
+            with pytest.raises(SystemExit):
+                main()
+        
+        # Run shell command with mock quit input
+        with patch("builtins.input", side_effect=[".exit"]):
+            with patch.object(sys, "argv", ["sql-analytics", "shell"]):
+                with pytest.raises(SystemExit) as exc_info:
+                    main()
+                assert exc_info.value.code == 0
+                captured = capsys.readouterr()
+                assert "E-commerce SQL Analytics Interactive Shell" in captured.out
+                assert "Goodbye!" in captured.out
+                
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]

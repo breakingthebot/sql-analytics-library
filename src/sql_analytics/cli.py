@@ -168,6 +168,23 @@ def cmd_dashboard(args: argparse.Namespace) -> int:
         print(f"\n[-] Error generating dashboard: {e}", file=sys.stderr)
         return 1
 
+def cmd_shell(args: argparse.Namespace) -> int:
+    """Handle the shell CLI command."""
+    db_mgr = DBManager()
+    if not db_mgr.db_path.exists():
+        print(f"\n[-] Database file does not exist at: {db_mgr.db_path}")
+        print("Run 'sql-analytics db-init' to create it.")
+        return 1
+        
+    try:
+        from sql_analytics.services.repl_shell import REPLShell
+        shell = REPLShell(db_mgr)
+        shell.run()
+        return 0
+    except Exception as e:
+        print(f"\n[-] Error starting interactive shell: {e}", file=sys.stderr)
+        return 1
+
 def main() -> None:
     """CLI Main Entry Point."""
     parser = argparse.ArgumentParser(
@@ -248,6 +265,10 @@ def main() -> None:
         help="Specify the output HTML file path (default: reports/dashboard.html)"
     )
     parser_dash.set_defaults(func=cmd_dashboard)
+    
+    # shell command
+    parser_shell = subparsers.add_parser("shell", help="Launch an interactive SQL query REPL shell")
+    parser_shell.set_defaults(func=cmd_shell)
     
     args = parser.parse_args()
     
