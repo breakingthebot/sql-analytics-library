@@ -48,3 +48,14 @@ def test_generate_mock_data_integrity():
         assert log["product_id"] in prod_ids
         assert log["reason"] in ["Restock", "Sale", "Return", "Adjustment"]
         assert isinstance(log["logged_at"], datetime)
+
+def test_generate_mock_data_seasonal():
+    """Verify that seasonal trends data generation runs without errors and produces valid dates."""
+    data = generate_mock_data(num_customers=10, num_products=5, num_orders=20, seed=42, seasonal_trends=True)
+    
+    assert "orders" in data
+    assert len(data["orders"]) == 20
+    
+    for order in data["orders"]:
+        assert isinstance(order["order_date"], datetime)
+        assert order["order_date"] <= datetime.now()

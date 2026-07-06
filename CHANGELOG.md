@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-07-06
+### Added
+- `--seasonal` CLI option on the `db-init` command to simulate seasonal retail shopping trends (Nov/Dec holiday spikes, July summer campaigns, post-holiday slumps).
+- Modified mock data generator to perform rejection-sampling on dates using month-specific sales weight profiles.
+- Added test coverage checking seasonal transaction timeline ranges and valid date boundaries.
+
 ## [0.7.0] - 2026-07-06
 ### Added
 - `dashboard` CLI subcommand enabling executive HTML/CSS portfolio dashboard generation.

@@ -317,7 +317,8 @@ class DBManager:
         num_products: int = 30,
         num_orders: int = 300,
         days_back: int = 730,
-        seed: int = 42
+        seed: int = 42,
+        seasonal_trends: bool = False
     ) -> None:
         """
         Generate and insert mock data into the database.
@@ -328,15 +329,17 @@ class DBManager:
             num_orders (int): Number of orders.
             days_back (int): Number of days of historical records.
             seed (int): Random seed for reproducibility.
+            seasonal_trends (bool): Whether to inject seasonal peak periods (holiday spikes, summer promotions).
         """
-        logger.info("Generating mock data (customers=%d, products=%d, orders=%d, seed=%d)",
-                    num_customers, num_products, num_orders, seed)
+        logger.info("Generating mock data (customers=%d, products=%d, orders=%d, seed=%d, seasonal=%s)",
+                    num_customers, num_products, num_orders, seed, seasonal_trends)
         data = generate_mock_data(
             num_customers=num_customers,
             num_products=num_products,
             num_orders=num_orders,
             days_back=days_back,
-            seed=seed
+            seed=seed,
+            seasonal_trends=seasonal_trends
         )
 
         with self.get_connection() as conn:

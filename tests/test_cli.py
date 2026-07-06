@@ -206,3 +206,19 @@ def test_cli_dashboard(capsys, tmp_path):
         
     finally:
         del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_db_init_seasonal(capsys, tmp_path):
+    """Verify that database initialization and seeding works with the --seasonal flag."""
+    temp_db = tmp_path / "cli_seasonal_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "10", "--products", "5", "--orders", "15", "--seasonal"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert "Database initialized and populated successfully!" in captured.out
+            
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]

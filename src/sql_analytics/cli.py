@@ -30,7 +30,8 @@ def cmd_db_init(args: argparse.Namespace) -> int:
             num_customers=args.customers,
             num_products=args.products,
             num_orders=args.orders,
-            seed=args.seed
+            seed=args.seed,
+            seasonal_trends=args.seasonal
         )
         print("\n[+] Database initialized and populated successfully!")
         print(f"DB Path: {db_mgr.db_path}")
@@ -189,6 +190,7 @@ def main() -> None:
     parser_init.add_argument("--products", type=int, default=30, help="Number of products to generate")
     parser_init.add_argument("--orders", type=int, default=300, help="Number of orders to generate")
     parser_init.add_argument("--seed", type=int, default=42, help="Seed for mock data generator")
+    parser_init.add_argument("--seasonal", action="store_true", help="Enable seasonal trends (Nov/Dec spikes)")
     parser_init.set_defaults(func=cmd_db_init)
     
     # db-status command

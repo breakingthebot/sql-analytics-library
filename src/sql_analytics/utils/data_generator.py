@@ -79,12 +79,52 @@ REVIEW_COMMENTS = {
     1: ["Terrible quality.", "Broke on first use.", "Complete waste of money.", "Do not buy!", "Horrible experience."]
 }
 
+def _generate_seasonal_order_date(cust_created: datetime, end_date: datetime, seasonal_trends: bool) -> datetime:
+    """Generate a date between cust_created and end_date, possibly weighted by seasonal factors."""
+    days_range = (end_date - cust_created).days
+    if days_range <= 0:
+        return cust_created
+
+    # Monthly weights: Nov (11) and Dec (12) are holiday peaks. July (7) is summer peak. Jan (1) and Feb (2) are post-holiday slumps.
+    weights = {
+        1: 0.6,
+        2: 0.7,
+        3: 0.9,
+        4: 1.0,
+        5: 1.1,
+        6: 1.2,
+        7: 1.5,
+        8: 1.0,
+        9: 0.9,
+        10: 1.2,
+        11: 2.2,
+        12: 3.2
+    }
+
+    if not seasonal_trends:
+        days_offset = random.randint(0, days_range)
+        return cust_created + timedelta(days=days_offset, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+
+    # Rejection sampling with a ceiling to enforce the seasonal curve
+    for _ in range(50):
+        days_offset = random.randint(0, days_range)
+        candidate_date = cust_created + timedelta(days=days_offset, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+        month = candidate_date.month
+        weight = weights.get(month, 1.0)
+        
+        if random.random() <= (weight / 3.2):
+            return candidate_date
+            
+    days_offset = random.randint(0, days_range)
+    return cust_created + timedelta(days=days_offset, hours=random.randint(0, 23), minutes=random.randint(0, 59))
+
 def generate_mock_data(
     num_customers: int = 100,
     num_products: int = 30,
     num_orders: int = 300,
     days_back: int = 730,
-    seed: int = 42
+    seed: int = 42,
+    seasonal_trends: bool = False
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Generates structured mock data for customers, products, orders, items, reviews, and logs.
@@ -187,15 +227,9 @@ def generate_mock_data(
         customer = random.choice(customers)
         cust_created = customer["created_at"]
         
-        # Order date must be after customer creation date
-        days_remaining = (datetime.now() - cust_created).days
-        if days_remaining <= 0:
-            order_date = cust_created
-        else:
-            order_date = cust_created + timedelta(days=random.randint(0, days_remaining),
-                                                  hours=random.randint(0, 23),
-                                                  minutes=random.randint(0, 59))
-            
+        # Generate order date (optionally seasonal-weighted)
+        order_date = _generate_seasonal_order_date(cust_created, datetime.now(), seasonal_trends)
+        
         # Ensure order date is not in the future relative to now
         if order_date > datetime.now():
             order_date = datetime.now()

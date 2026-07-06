@@ -43,9 +43,13 @@ Here are the exact CLI commands to run the application:
 1. **Initialize and Seed Database**:
    Generates a schema and populates it with realistic mock records.
    ```bash
-   sql-analytics db-init
+   sql-analytics db-init --seasonal
    ```
-   *Options*: Customize dataset size using `--customers <count>`, `--products <count>`, `--orders <count>`.
+   *Options*:
+   - `--customers <count>`: Number of customers to generate (default: 100).
+   - `--products <count>`: Number of products to generate (default: 30).
+   - `--orders <count>`: Number of orders to generate (default: 300).
+   - `--seasonal`: Skews transaction date generation using seasonal weights (simulating holiday shopping spikes and summer sales cycles).
 
 2. **Check Database Status**:
    Print table names and row counts to verify data integrity.
