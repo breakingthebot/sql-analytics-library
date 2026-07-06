@@ -211,22 +211,42 @@ class DBManager:
                 logger.error("Query execution failed: %s\nQuery: %s", e, query)
                 raise
 
-    def execute_query_formatted(self, query: str, params: Tuple[Any, ...] = (), fmt: str = "grid") -> str:
+    def execute_query_formatted(self, query: str, params: Tuple[Any, ...] = (), fmt: str = "table") -> str:
         """
-        Execute an analytical SQL query and format the result as a text table.
+        Execute an analytical SQL query and format the result based on format type.
 
         Parameters:
             query (str): The raw SQL query to run.
             params (Tuple[Any, ...]): Parameters to bind to the query.
-            fmt (str): The tabulate table format (e.g. 'grid', 'fancy_grid', 'pipe').
+            fmt (str): The format type ('table', 'csv', 'json', 'markdown').
 
         Returns:
-            str: Pretty printed table of the query results.
+            str: The formatted query results.
         """
+        import csv
+        import json
+        import io
+
         results = self.execute_query(query, params)
         if not results:
             return "No results returned."
-        
-        headers = list(results[0].keys())
-        rows = [list(r.values()) for r in results]
-        return tabulate(rows, headers=headers, tablefmt=fmt)
+
+        if fmt == "csv":
+            output = io.StringIO()
+            writer = csv.DictWriter(output, fieldnames=results[0].keys())
+            writer.writeheader()
+            writer.writerows(results)
+            return output.getvalue()
+
+        elif fmt == "json":
+            return json.dumps(results, indent=2, default=str)
+
+        elif fmt == "markdown":
+            headers = list(results[0].keys())
+            rows = [list(r.values()) for r in results]
+            return tabulate(rows, headers=headers, tablefmt="github")
+
+        else:  # default 'table' or 'grid'
+            headers = list(results[0].keys())
+            rows = [list(r.values()) for r in results]
+            return tabulate(rows, headers=headers, tablefmt="grid")

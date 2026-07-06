@@ -91,8 +91,17 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(query_def["sql"].strip())
             print("-" * 40 + "\n")
             
-        result_table = db_mgr.execute_query_formatted(query_def["sql"])
-        print(result_table)
+        formatted_result = db_mgr.execute_query_formatted(query_def["sql"], fmt=args.format)
+        
+        if args.output:
+            from pathlib import Path
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(formatted_result, encoding="utf-8")
+            print(f"[+] Results successfully exported to: {out_path.resolve()}")
+        else:
+            print(formatted_result)
+            
         return 0
     except ValueError as ve:
         print(f"\n[-] {ve}", file=sys.stderr)
@@ -137,6 +146,17 @@ def main() -> None:
     parser_run = subparsers.add_parser("run", help="Run a specific analytical query by its ID")
     parser_run.add_argument("query_id", type=int, help="The query ID to run")
     parser_run.add_argument("--verbose", action="store_true", help="Print the SQL query before execution")
+    parser_run.add_argument(
+        "--format", "-f",
+        choices=["table", "csv", "json", "markdown"],
+        default="table",
+        help="Specify the output format (default: table)."
+    )
+    parser_run.add_argument(
+        "--output", "-o",
+        type=str,
+        help="Write query output directly to a file path."
+    )
     parser_run.set_defaults(func=cmd_run)
     
     args = parser.parse_args()

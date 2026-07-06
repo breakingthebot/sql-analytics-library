@@ -64,7 +64,12 @@ Here are the exact CLI commands to run the application:
    ```bash
    sql-analytics run 1
    ```
-   *Options*: Add `--verbose` to view the raw SQL statement before running.
+   *Options*:
+   - `--verbose`: Print the raw SQL query statement before running.
+   - `--format` or `-f`: Specify output format (`table` [default], `csv`, `json`, `markdown`).
+     - E.g., `sql-analytics run 1 -f json`
+   - `--output` or `-o`: Export results directly to a local file.
+     - E.g., `sql-analytics run 1 -f csv -o reports/ltv_report.csv`
 
 5. **Run Automated Tests**:
    ```bash

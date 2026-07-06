@@ -70,3 +70,75 @@ def test_cli_db_init_and_run(capsys, tmp_path):
             
     finally:
         del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_output_formats(capsys, tmp_path):
+    """Verify that specifying different formats (csv, json, markdown) alters the output layout."""
+    temp_db = tmp_path / "cli_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        # Initialize
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "5", "--products", "3", "--orders", "5"]):
+            with pytest.raises(SystemExit):
+                main()
+        
+        # Test JSON format
+        with patch.object(sys, "argv", ["sql-analytics", "run", "1", "--format", "json"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert '"lifetime_value":' in captured.out
+            assert '[' in captured.out
+            assert ']' in captured.out
+            
+        # Test CSV format
+        with patch.object(sys, "argv", ["sql-analytics", "run", "1", "--format", "csv"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert 'customer_id' in captured.out
+            assert 'lifetime_value' in captured.out
+            
+        # Test Markdown format
+        with patch.object(sys, "argv", ["sql-analytics", "run", "1", "--format", "markdown"]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert 'customer_id' in captured.out
+            assert '|' in captured.out
+            
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_output_file(capsys, tmp_path):
+    """Verify that writing output to a file works and creates the target file."""
+    temp_db = tmp_path / "cli_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        # Initialize
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "5", "--products", "3", "--orders", "5"]):
+            with pytest.raises(SystemExit):
+                main()
+        
+        out_csv = tmp_path / "exports" / "ltv_report.csv"
+        
+        # Run and save to out_csv
+        with patch.object(sys, "argv", ["sql-analytics", "run", "1", "--format", "csv", "--output", str(out_csv)]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert "Results successfully exported to:" in captured.out
+            
+        # Assert file exists and contains CSV headers
+        assert out_csv.exists()
+        content = out_csv.read_text(encoding="utf-8")
+        assert "customer_id" in content
+        assert "lifetime_value" in content
+        
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]
