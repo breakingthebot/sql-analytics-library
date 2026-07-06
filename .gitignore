@@ -35,3 +35,6 @@ tests/tmp/
 *.egg-info/
 build/
 dist/
+
+# Generated Reports
+reports/

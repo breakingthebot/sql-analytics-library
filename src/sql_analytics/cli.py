@@ -143,6 +143,30 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         print(f"\n[-] Error running performance benchmark: {e}", file=sys.stderr)
         return 1
 
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    """Handle the dashboard CLI command."""
+    db_mgr = DBManager()
+    if not db_mgr.db_path.exists():
+        print(f"\n[-] Database file does not exist at: {db_mgr.db_path}")
+        print("Run 'sql-analytics db-init' to create it.")
+        return 1
+        
+    try:
+        from sql_analytics.services.dashboard_generator import DashboardGenerator
+        from pathlib import Path
+        
+        out_path = Path(args.output)
+        print(f"\nGenerating executive SQL analytics dashboard...")
+        
+        generator = DashboardGenerator(db_mgr)
+        generator.generate_html(out_path)
+        
+        print(f"[+] Dashboard successfully generated at: {out_path.resolve()}")
+        return 0
+    except Exception as e:
+        print(f"\n[-] Error generating dashboard: {e}", file=sys.stderr)
+        return 1
+
 def main() -> None:
     """CLI Main Entry Point."""
     parser = argparse.ArgumentParser(
@@ -212,6 +236,16 @@ def main() -> None:
         help="Write benchmark metrics directly to a file path."
     )
     parser_bench.set_defaults(func=cmd_benchmark)
+    
+    # dashboard command
+    parser_dash = subparsers.add_parser("dashboard", help="Generate an interactive HTML/CSS portfolio dashboard")
+    parser_dash.add_argument(
+        "--output", "-o",
+        type=str,
+        default="reports/dashboard.html",
+        help="Specify the output HTML file path (default: reports/dashboard.html)"
+    )
+    parser_dash.set_defaults(func=cmd_dashboard)
     
     args = parser.parse_args()
     

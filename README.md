@@ -82,7 +82,15 @@ Here are the exact CLI commands to run the application:
    - `--output` or `-o`: Export benchmark metrics to a local file path.
      - E.g., `sql-analytics benchmark -f json -o benchmark_report.json`
 
-6. **Run Automated Tests**:
+6. **Generate Executive HTML Dashboard**:
+   Extract core aggregates and compile a premium interactive web dashboard report.
+   ```bash
+   sql-analytics dashboard --output reports/dashboard.html
+   ```
+   *Options*:
+   - `--output` or `-o`: Configure the target HTML file path (default: `reports/dashboard.html`).
+
+7. **Run Automated Tests**:
    ```bash
    pytest --basetemp=tests/tmp
    ```

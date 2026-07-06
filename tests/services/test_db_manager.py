@@ -8,11 +8,6 @@ import sqlite3
 from pathlib import Path
 from sql_analytics.services.db_manager import DBManager
 
-@pytest.fixture
-def temp_db_mgr(tmp_path):
-    """Fixture to provide a DBManager pointing to a temporary sqlite database file."""
-    temp_db_file = tmp_path / "test_ecommerce.db"
-    return DBManager(db_path=temp_db_file)
 
 def test_db_manager_initialization(temp_db_mgr):
     """Test that schema initialization creates expected tables."""

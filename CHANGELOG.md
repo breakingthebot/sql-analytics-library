@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-06
+### Added
+- `dashboard` CLI subcommand enabling executive HTML/CSS portfolio dashboard generation.
+- DashboardGenerator service compiling interactive charts (Category Margins and Monthly Trends), HSL-mapped Cohort decay heatmaps, and visual KPIs.
+- Automated tests verifying HTML structure compile and CLI parser parameters.
+- Project-wide pytest database connection fixture sharing.
+
 ## [0.6.0] - 2026-07-06
 ### Added
 - `benchmark` CLI subcommand enabling query performance benchmarking.

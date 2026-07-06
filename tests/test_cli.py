@@ -177,3 +177,32 @@ def test_cli_benchmark(capsys, tmp_path):
 
     finally:
         del os.environ["SQL_ANALYTICS_DB_PATH"]
+
+def test_cli_dashboard(capsys, tmp_path):
+    """Verify that calling the CLI 'dashboard' subcommand creates the HTML report."""
+    temp_db = tmp_path / "cli_test.db"
+    os.environ["SQL_ANALYTICS_DB_PATH"] = str(temp_db)
+    
+    try:
+        # Initialize
+        with patch.object(sys, "argv", ["sql-analytics", "db-init", "--customers", "5", "--products", "3", "--orders", "5"]):
+            with pytest.raises(SystemExit):
+                main()
+        
+        out_html = tmp_path / "reports" / "dashboard.html"
+        
+        # Run dashboard command
+        with patch.object(sys, "argv", ["sql-analytics", "dashboard", "--output", str(out_html)]):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+            captured = capsys.readouterr()
+            assert "Generating executive SQL analytics dashboard..." in captured.out
+            assert "Dashboard successfully generated at:" in captured.out
+            
+        assert out_html.exists()
+        content = out_html.read_text(encoding="utf-8")
+        assert "<!DOCTYPE html>" in content
+        
+    finally:
+        del os.environ["SQL_ANALYTICS_DB_PATH"]
