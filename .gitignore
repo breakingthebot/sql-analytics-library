@@ -1,0 +1,37 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQL Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Agent Configuration (strictly ignored)
+AGENTS.md
+
+# OS/IDE settings
+.vscode/
+.idea/
+.DS_Store
+
+# Build Notes Log
+BUILD_NOTES.md
+
+# Python Test & Coverage Caches
+.pytest_cache/
+.coverage
+htmlcov/
+tests/tmp/
+
+# Build & Metadata
+*.egg-info/
+build/
+dist/
