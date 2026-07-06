@@ -67,3 +67,21 @@ def test_db_manager_query_formatted(temp_db_mgr):
     assert "customer_id" in table_str
     assert "email" in table_str
     assert "@example.com" in table_str
+
+def test_db_manager_all_registered_queries(temp_db_mgr):
+    """Test that all queries in the registry execute successfully on a populated database."""
+    from sql_analytics.queries import QUERIES
+    
+    temp_db_mgr.initialize_database()
+    # Populate with slightly larger dataset to guarantee data flows (e.g. returns/reviews exist)
+    temp_db_mgr.populate_mock_data(num_customers=40, num_products=15, num_orders=100, seed=123)
+    
+    for query_def in QUERIES:
+        try:
+            res = temp_db_mgr.execute_query(query_def["sql"])
+            # Some queries might return empty if constraints are tight, but they must not throw syntax errors
+            assert isinstance(res, list)
+            if len(res) > 0:
+                assert isinstance(res[0], dict)
+        except Exception as e:
+            pytest.fail(f"Query {query_def['id']} failed to execute: {e}\nSQL:\n{query_def['sql']}")

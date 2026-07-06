@@ -71,6 +71,19 @@ Here are the exact CLI commands to run the application:
    pytest --basetemp=tests/tmp
    ```
 
+## Analytical Queries
+The library currently includes the following 10 complex analytical queries:
+1. **Top Customers by Lifetime Value (LTV)**: Ranks customers by their lifetime spending on completed orders.
+2. **Product Category Profit Margins**: Analyzes margins, cost, revenue, and units sold by category.
+3. **Monthly Sales and Order Trends**: Tracks month-over-month revenue growth and Average Order Value (AOV).
+4. **Customer Purchase Frequency Distribution**: Tracks the distribution of orders per customer to view retention.
+5. **Monthly Customer Cohort Retention Rate**: Tracks cohort activity month-over-month using complex date calculations.
+6. **Average Days Between Purchases by Customer Segment**: Tracks buy-cycle intervals using the `LAG` window function.
+7. **High-Velocity Inventory Stock Turnover Alert**: Alerts on products with low stock relative to 30-day sales velocity.
+8. **Product Return Rates and Profit Leakage Ranks**: Calculates return rates and category ranks using `DENSE_RANK`.
+9. **Rolling Customer Average Spend Trend**: Performs trend analysis using frame-bounded window averages (`ROWS BETWEEN`).
+10. **Customer Revenue Pareto Analysis (80/20 Rule)**: Uses running totals (`SUM OVER`) to classify top 80% VIP revenue drivers.
+
 ## Deployed
 Not applicable (Local portfolio development package).
 
